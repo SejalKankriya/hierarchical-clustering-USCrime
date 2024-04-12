@@ -1,0 +1,149 @@
+---
+title: "State-by-State Crime Analysis Using Hierarchical Clustering"
+author: "Sejal Kankriya"
+date: '2023-02-20'
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+always_allow_html: true
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(cluster)
+library(dplyr)
+library(magrittr)
+library(ggplot2)
+library(plotly)
+library(data.table)
+library(caret)
+library(ggbiplot)
+library(tidyr)
+library(cowplot)
+library(ggdendro)
+library(factoextra)
+```
+
+# USArrests Dataset and Hierarchical Clustering
+
+Consider the "USArrests" data. It is a built-in dataset you may directly
+get in RStudio. Performing hierarchical clustering on the observations (states)
+
+```{r}
+head(USArrests)
+```
+
+Using hierarchical clustering with complete linkage and
+Euclidean distance, cluster the states
+
+```{r}
+set.seed(8)
+
+data("USArrests")
+
+# Load the data
+data <- USArrests
+
+# Omiting the missing values if any
+data <- na.omit(data)
+
+# Computing the distance matrix using euclidean method
+distance_matrix <- dist(data, method = "euclidean")
+
+# Performing hierarchical clustering
+hc.complete <- hclust(distance_matrix, method = "complete")
+
+# Plot the dendrogram
+plot(hc.complete, main = "Complete Linkage",
+    xlab = "", sub = "", cex = .5, hang = -1)
+```
+
+```{r}
+# ggplot
+ggdendrogram(hc.complete, segements=TRUE, labels=TRUE, leaf_labels = TRUE, rotate=FALSE, theme_dendro = TRUE) +
+ labs(title='Complete Linkage')
+```
+
+Cut the dendrogram at a height that results in three distinct
+clusters and interpreting the clusters
+
+```{r}
+# Determining the cut tree
+clusters <- cutree(hc.complete, 3)
+clusters
+```
+
+```{r}
+table(clusters)
+cat("\nStates belonging to Cluster 1\n")
+subset(row.names(USArrests), clusters == 1)
+cat("\nStates belonging to Cluster 2\n")
+subset(row.names(USArrests), clusters == 2)
+cat("\nStates belonging to Cluster 3\n")
+subset(row.names(USArrests), clusters == 3)
+```
+
+Cluster 1 contains the states with higher levels of violent crimes and
+arrests, such as California, New York, Florida, and Illinois. Cluster 2
+includes states that have moderate levels of violent crimes and arrests,
+such as Arkansas, Georgia, and Tennessee. Finally, Cluster 3 consists of
+states with lower levels of violent crimes and arrests, such as Maine,
+Montana, and Vermont.
+
+Hierarchically cluster the states using complete linkage and
+Euclidean distance, after scaling the variables to have standard
+deviation one. Obtaining three clusters.
+
+```{r}
+set.seed(6)
+data("USArrests")
+# Load the data
+data <- USArrests
+# Omiting the missing values if any
+data <- na.omit(data)
+# Standardizing the data before clustering
+data_scaled <- scale(data)
+# Computing the distance matrix using euclidean method
+distance_matrix <- dist(data_scaled, method = "euclidean")
+# Performing hierarchical clustering
+hc.complete_scaled <- hclust(distance_matrix, method = "complete")
+# Plot the dendrogram
+plot(hc.complete_scaled, main = "Complete Linkage",
+    xlab = "", sub = "", cex = .5, hang = -1)
+```
+
+```{r}
+# ggplot
+ggdendrogram(hc.complete_scaled, segements=TRUE, labels=TRUE, leaf_labels = TRUE, rotate=FALSE, theme_dendro = TRUE) +
+ labs(title='Complete Linkage')
+```
+
+```{r}
+# Determining the cut tree
+scaled_cutree <- cutree(hc.complete, 3)
+scaled_cutree
+```
+
+```{r}
+table(scaled_cutree)
+cat("\nStates belonging to Cluster 1\n")
+subset(row.names(USArrests), scaled_cutree == 1)
+cat("\nStates belonging to Cluster 2\n")
+subset(row.names(USArrests), scaled_cutree == 2)
+cat("\nStates belonging to Cluster 3\n")
+subset(row.names(USArrests), scaled_cutree == 3)
+```
+
+The 50 states in the USArrests dataset have been separated into three distinct clusters based on their similarities and differences, according to the output of the cutree() tool. 
+
+Alabama, Alaska, Georgia, Louisiana, Mississippi, North Carolina, South Carolina, and Tennessee are all part of Cluster 1. When the clusters are interpreted, we can observe that Cluster 1 predominantly consists of states in the United States' Southeastern area, such as Alabama, Georgia, and Louisiana, which have relatively high crime rates across all four categories examined in the dataset (assault, murder, rape, and robbery). 
+
+Arizona, California, Colorado, Florida, Illinois, Maryland, Michigan, Nevada, New Mexico, New York, and Texas are part of Cluster 2. 
+These states have intermediate rates of violent crime, murder, rape and assault arrest rates.
+
+Cluster 3 consists of the remaining 32 states, which had lower rates of violent crime and arrest rates for murder, rape, and assault when compared to the other states in the dataset.
